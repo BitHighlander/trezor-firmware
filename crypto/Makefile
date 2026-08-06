@@ -111,6 +111,12 @@ tests/test_check: tests/test_check.o $(OBJS)
 tests/test_pallas_ct: tests/test_pallas_ct.c pallas_ct.c pallas_ct.h memzero.c options.h
 	$(CC) $(CFLAGS) tests/test_pallas_ct.c pallas_ct.c memzero.c -o tests/test_pallas_ct
 
+# Standalone RedPallas nonce harness. Supplies its own random_buffer(), so it
+# links the specific objects it needs rather than $(OBJS), which would pull in
+# rand.o and collide with the stub.
+tests/test_redpallas_nonce: tests/test_redpallas_nonce.c redpallas.c redpallas.h pallas.c pallas_ct.c bignum.c blake2b.c memzero.c options.h
+	$(CC) $(CFLAGS) tests/test_redpallas_nonce.c redpallas.c pallas.c pallas_ct.c bignum.c blake2b.c memzero.c -o tests/test_redpallas_nonce
+
 tests/test_speed: tests/test_speed.o $(OBJS)
 	$(CC) tests/test_speed.o $(OBJS) -o tests/test_speed
 
@@ -136,7 +142,7 @@ fuzzer: fuzzer/fuzzer.o $(OBJS)
 
 clean:
 	rm -f *.o aes/*.o chacha20poly1305/*.o ed25519-donna/*.o monero/*.o
-	rm -f tests/*.o tests/test_check tests/test_pallas_ct tests/test_speed tests/test_openssl tests/libtrezor-crypto.so tests/aestst
+	rm -f tests/*.o tests/test_check tests/test_pallas_ct tests/test_redpallas_nonce tests/test_speed tests/test_openssl tests/libtrezor-crypto.so tests/aestst
 	rm -f tools/*.o tools/xpubaddrgen tools/mktable tools/bip39bruteforce
 	rm -f fuzzer/*.o fuzzer/fuzzer
 

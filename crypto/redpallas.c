@@ -276,9 +276,39 @@ static int redpallas_sign_with_rsk(
   curve_point R_point;
   uint8_t R_bytes[32];
 
-  /* Generate random nonce r */
+  /* Hedged nonce derivation.
+   *
+   * A nonce taken straight from random_buffer() makes the Orchard spend
+   * authorization key recoverable whenever the RNG repeats: two signatures
+   * sharing a nonce solve for rsk algebraically, and since the host supplies
+   * alpha, ask follows from rsk. The STM32 random32() only rejects
+   * consecutive equal words and has no way to report failure, so a stuck,
+   * biased or short-cycle TRNG is not caught before it reaches this point.
+   *
+   * Bind the nonce to the secret scalar and the message as well, in the shape
+   * reddsa uses (H(randomness || vk || M)). With a healthy RNG the nonce is
+   * random; with a dead one it degrades to deterministic per
+   * (rsk, rk, sighash) instead of repeating across different messages.
+   * Signing the same message twice under the same key then yields the
+   * identical signature, which leaks nothing.
+   *
+   * Reducing 32 uniform bytes mod q is unbiased to ~2^-128 here because the
+   * Pallas scalar order sits just above 2^254, so 2^256/q is within 2^-128 of
+   * exactly 4 and every residue gets the same number of preimages. */
   uint8_t rbuf[32];
+  uint8_t rsk_bytes[32];
+  BLAKE2B_CTX nonce_ctx;
+
   random_buffer(rbuf, 32);
+  bn_write_le(rsk, rsk_bytes);
+
+  blake2b_InitPersonal(&nonce_ctx, 32, "KeepKey_RedPalN1", 16);
+  blake2b_Update(&nonce_ctx, rsk_bytes, 32);
+  blake2b_Update(&nonce_ctx, rk_bytes, 32);
+  blake2b_Update(&nonce_ctx, sighash, 32);
+  blake2b_Update(&nonce_ctx, rbuf, 32);
+  blake2b_Final(&nonce_ctx, rbuf, 32);
+
   bn_read_le(rbuf, &r);
   pallas_ct_mod_q(&r);
 
@@ -315,6 +345,8 @@ static int redpallas_sign_with_rsk(
   memzero(&R_point, sizeof(R_point));
   memzero(R_bytes, sizeof(R_bytes));
   memzero(rbuf, sizeof(rbuf));
+  memzero(rsk_bytes, sizeof(rsk_bytes));
+  memzero(&nonce_ctx, sizeof(nonce_ctx));
 
   return 0;
 }
