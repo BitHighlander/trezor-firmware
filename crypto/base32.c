@@ -152,7 +152,7 @@ bool base32_8to5(const uint8_t *in, uint8_t length, uint8_t *out,
   }
 
   if (alphabet) {
-    uint8_t decoded[length];
+    uint8_t decoded[8];
     memset(decoded, 0, sizeof(decoded));
 
     for (size_t i = 0; i < length; i++) {

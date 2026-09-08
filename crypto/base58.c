@@ -51,6 +51,9 @@ static const b58_almostmaxint_t b58_almostmaxint_mask =
 // to the number of valid bytes at the end of the buffer.
 bool b58tobin(void *bin, size_t *binszp, const char *b58) {
   size_t binsz = *binszp;
+#ifdef BASE58_MAX_BINARY_SIZE
+  if (binsz > BASE58_MAX_BINARY_SIZE) return false;
+#endif
 
   if (binsz == 0) {
     return false;
@@ -60,7 +63,13 @@ bool b58tobin(void *bin, size_t *binszp, const char *b58) {
   unsigned char *binu = bin;
   size_t outisz =
       (binsz + sizeof(b58_almostmaxint_t) - 1) / sizeof(b58_almostmaxint_t);
+#ifdef BASE58_MAX_BINARY_SIZE
+  b58_almostmaxint_t
+      outi[(BASE58_MAX_BINARY_SIZE + sizeof(b58_almostmaxint_t) - 1) /
+           sizeof(b58_almostmaxint_t)];
+#else
   b58_almostmaxint_t outi[outisz];
+#endif
   b58_maxint_t t = 0;
   b58_almostmaxint_t c = 0;
   size_t i = 0, j = 0;
@@ -146,6 +155,9 @@ int b58check(const void *bin, size_t binsz, HasherType hasher_type,
 }
 
 bool b58enc(char *b58, size_t *b58sz, const void *data, size_t binsz) {
+#ifdef BASE58_MAX_BINARY_SIZE
+  if (binsz > BASE58_MAX_BINARY_SIZE) return false;
+#endif
   const uint8_t *bin = data;
   int carry = 0;
   size_t i = 0, j = 0, high = 0, zcount = 0;
@@ -154,7 +166,11 @@ bool b58enc(char *b58, size_t *b58sz, const void *data, size_t binsz) {
   while (zcount < binsz && !bin[zcount]) ++zcount;
 
   size = (binsz - zcount) * 138 / 100 + 1;
+#ifdef BASE58_MAX_BINARY_SIZE
+  uint8_t buf[BASE58_MAX_BINARY_SIZE * 138 / 100 + 1];
+#else
   uint8_t buf[size];
+#endif
   memzero(buf, size);
 
   for (i = zcount, high = size - 1; i < binsz; ++i, high = j) {
@@ -169,8 +185,7 @@ bool b58enc(char *b58, size_t *b58sz, const void *data, size_t binsz) {
     }
   }
 
-  for (j = 0; j < size && !buf[j]; ++j)
-    ;
+  for (j = 0; j < size && !buf[j]; ++j);
 
   if (*b58sz <= zcount + size - j) {
     *b58sz = zcount + size - j + 1;
@@ -187,10 +202,10 @@ bool b58enc(char *b58, size_t *b58sz, const void *data, size_t binsz) {
 
 int base58_encode_check(const uint8_t *data, int datalen,
                         HasherType hasher_type, char *str, int strsize) {
-  if (datalen > 128) {
+  if (datalen < 0 || datalen > 128) {
     return 0;
   }
-  uint8_t buf[datalen + 32];
+  uint8_t buf[128 + 32];
   memset(buf, 0, sizeof(buf));
   uint8_t *hash = buf + datalen;
   memcpy(buf, data, datalen);
@@ -203,10 +218,10 @@ int base58_encode_check(const uint8_t *data, int datalen,
 
 int base58_decode_check(const char *str, HasherType hasher_type, uint8_t *data,
                         int datalen) {
-  if (datalen > 128) {
+  if (datalen < 0 || datalen > 128) {
     return 0;
   }
-  uint8_t d[datalen + 4];
+  uint8_t d[128 + 4];
   memset(d, 0, sizeof(d));
   size_t res = datalen + 4;
   if (b58tobin(d, &res, str) != true) {
@@ -240,10 +255,10 @@ int b58gphcheck(const void *bin, size_t binsz, const char *base58str) {
 
 int base58gph_encode_check(const uint8_t *data, int datalen, char *str,
                            int strsize) {
-  if (datalen > 128) {
+  if (datalen < 0 || datalen > 128) {
     return 0;
   }
-  uint8_t buf[datalen + 32];
+  uint8_t buf[128 + 32];
   memset(buf, 0, sizeof(buf));
   uint8_t *hash = buf + datalen;
   memcpy(buf, data, datalen);
@@ -255,10 +270,10 @@ int base58gph_encode_check(const uint8_t *data, int datalen, char *str,
 }
 
 int base58gph_decode_check(const char *str, uint8_t *data, int datalen) {
-  if (datalen > 128) {
+  if (datalen < 0 || datalen > 128) {
     return 0;
   }
-  uint8_t d[datalen + 4];
+  uint8_t d[128 + 4];
   memset(d, 0, sizeof(d));
   size_t res = datalen + 4;
   if (b58tobin(d, &res, str) != true) {

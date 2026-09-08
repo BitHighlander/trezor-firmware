@@ -37,6 +37,9 @@ int base58_encode_check(const uint8_t *data, int len, HasherType hasher_type,
 int base58_decode_check(const char *str, HasherType hasher_type, uint8_t *data,
                         int datalen);
 
+/* Embedded builds may define BASE58_MAX_BINARY_SIZE to bound the private
+ * conversion scratch arrays. Such builds reject larger binary inputs/output
+ * capacities. Leave undefined to preserve the general-purpose interface. */
 // Private
 bool b58tobin(void *bin, size_t *binszp, const char *b58);
 int b58check(const void *bin, size_t binsz, HasherType hasher_type,
