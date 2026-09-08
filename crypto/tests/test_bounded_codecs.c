@@ -1,5 +1,11 @@
 /* Standalone regression executable; link base32/base58 and trezorcrypto.
  * Build base58.c with -DBASE58_MAX_BINARY_SIZE=132 for the bounded case. */
+#if !defined(BASE58_MAX_BINARY_SIZE) || BASE58_MAX_BINARY_SIZE != 132
+#error "Build this test and base58.c with BASE58_MAX_BINARY_SIZE=132"
+#endif
+#ifdef NDEBUG
+#error "This regression requires assertions enabled"
+#endif
 #include <assert.h>
 #include <string.h>
 #include "base32.h"
