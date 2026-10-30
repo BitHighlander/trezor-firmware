@@ -114,6 +114,8 @@ static bool constant_time_memeq(const void *s1, const void *s2, size_t n) {
   return diff == 0;
 }
 
+// `word` must point to at least BIP39_MAX_WORD_LEN + 1 readable bytes; both
+// callers guarantee it.
 static found_word mnemonic_find_word_constant_time(const char *word) {
   int result_index = -1;
   size_t result_length = 0;
@@ -121,8 +123,15 @@ static found_word mnemonic_find_word_constant_time(const char *word) {
   for (int i = 0; i < BIP39_WORDS; i++) {
     const char *dict_word = wordlist[i];
     size_t dict_word_len = strlen(dict_word);
-    bool is_match =
-        constant_time_memeq(word, dict_word, dict_word_len + 1);
+    // No English word is longer than BIP39_MAX_WORD_LEN, so this never
+    // shortens a comparison. It keeps every read of `word` inside its
+    // BIP39_MAX_WORD_LEN + 1 window, which GCC 15+ can't otherwise prove
+    // (-Wmaybe-uninitialized on the 9-byte buffer in mnemonic_find_word).
+    size_t cmp_len = dict_word_len + 1;
+    if (cmp_len > BIP39_MAX_WORD_LEN + 1) {
+      cmp_len = BIP39_MAX_WORD_LEN + 1;
+    }
+    bool is_match = constant_time_memeq(word, dict_word, cmp_len);
     int match_mask = -((int)is_match);
     result_index = (match_mask & i) | (~match_mask & result_index);
     result_length =
