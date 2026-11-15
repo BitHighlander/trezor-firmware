@@ -29,9 +29,11 @@
 #include "blake256.h"
 #include "blake2b.h"
 #include "ripemd160.h"
-#include "groestl.h"
 #include "sha2.h"
 #include "sha3.h"
+#if USE_GROESTL
+#include "groestl.h"
+#endif
 
 #define HASHER_DIGEST_LENGTH 32
 
@@ -49,7 +51,9 @@ typedef enum {
   HASHER_BLAKED,
   HASHER_BLAKE_RIPEMD,
 
+#if USE_GROESTL
   HASHER_GROESTLD_TRUNC, /* Double Groestl512 hasher truncated to 256 bits */
+#endif
 
   HASHER_BLAKE2B,
   HASHER_BLAKE2B_PERSONAL,
@@ -64,7 +68,9 @@ typedef struct {
     SHA256_CTX sha2;         // for HASHER_SHA2{,D}
     SHA3_CTX sha3;           // for HASHER_SHA3{,K}
     BLAKE256_CTX blake;      // for HASHER_BLAKE{,D}
+#if USE_GROESTL
     GROESTL512_CTX groestl;  // for HASHER_GROESTLD_TRUNC
+#endif
     BLAKE2B_CTX blake2b;     // for HASHER_BLAKE2B{,_PERSONAL}
     RIPEMD160_CTX ripemd160; // for HASHER_RIPEMD
   } ctx;

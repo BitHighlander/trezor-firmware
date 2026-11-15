@@ -91,6 +91,12 @@
 #define USE_KECCAK 1
 #endif
 
+// support Groestl hashing (Groestlcoin: HASHER_GROESTLD_TRUNC,
+// secp256k1-groestl)
+#ifndef USE_GROESTL
+#define USE_GROESTL 1
+#endif
+
 // add way how to mark confidential data
 #ifndef CONFIDENTIAL
 #define CONFIDENTIAL

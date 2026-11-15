@@ -27,7 +27,9 @@
 
 extern const char SECP256K1_NAME[];
 extern const char SECP256K1_DECRED_NAME[];
+#if USE_GROESTL
 extern const char SECP256K1_GROESTL_NAME[];
+#endif
 extern const char SECP256K1_SMART_NAME[];
 extern const char NIST256P1_NAME[];
 extern const char ED25519_NAME[];

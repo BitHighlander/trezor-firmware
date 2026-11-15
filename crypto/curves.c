@@ -24,7 +24,9 @@
 
 const char SECP256K1_NAME[] = "secp256k1";
 const char SECP256K1_DECRED_NAME[] = "secp256k1-decred";
+#if USE_GROESTL
 const char SECP256K1_GROESTL_NAME[] = "secp256k1-groestl";
+#endif
 const char SECP256K1_SMART_NAME[] = "secp256k1-smart";
 const char NIST256P1_NAME[] = "nist256p1";
 const char ED25519_NAME[] = "ed25519";
